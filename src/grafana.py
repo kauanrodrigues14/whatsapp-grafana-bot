@@ -15,8 +15,8 @@ def capturar_painel(
     destino: Path,
     periodo_de: str = "now-6h",
     periodo_ate: str = "now",
-    largura:int = 1200,
-    altura: int = 600,
+    largura:int = 1920,
+    altura: int = 1080,
     tz: str = "America/Sao_Paulo",
     timeout: int = 60,    
 ) -> Path: 
