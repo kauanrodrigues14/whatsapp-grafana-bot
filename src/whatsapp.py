@@ -18,7 +18,7 @@ def enviar_imagem(
 ) -> None:
     """Envia imagem com legenada """
     url = f"{base_url.rstrip('/')}/message/sendMedia/{instancia}"
-    headers =  {"api_key":api_key}
+    headers =  {"apikey": api_key}
     imagem_b64 = base64.b64encode(caminho.read_bytes()).decode("ascii")
     payload = {
         "number": destino,

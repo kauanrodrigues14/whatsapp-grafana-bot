@@ -1,25 +1,63 @@
-import os
-
+import sys
+import time
 from pathlib import Path
 
-from dotenv import load_dotenv
+from config import Config, ConfigError, Painel, carregar_config
 from grafana import GrafanaError, capturar_painel
+from whatsapp import WhatsAppError, enviar_imagem
 
-load_dotenv()
 
-BASE_URL = os.getenv("GRAFANA_URL", "http://localhost:3000")
-TOKEN = os.getenv("GRAFANA_TOKEN")
+PASTA_SAIDA = Path("output")
 
-PAINEIS = [
-    {"nome":"apis","uid":"kaztwkz", "slug":"apis","panel_id": 1},
-    {"nome":"fid-geral","uid":"ka4dd8q", "slug":"fid-geral", "panel_id": 1}, 
+def processar_painel(cfg:Config, painel: Painel ) -> None:
+    """ Captura"""
+    arquivo = PASTA_SAIDA / f"{painel.ordem:02d}_{painel.slug}.png"
+    try:
+        capturar_painel(
+            cfg.grafana_url,
+            cfg.grafana_token,
+            painel.uid,
+            painel.slug,
+            painel.panel_id,
+            arquivo,
+            periodo_de=cfg.periodo_de,
+            periodo_ate=cfg.periodo_ate,
+        )
+        enviar_imagem(
+            cfg.evolution_url,
+            cfg.evolution_api_key,
+            cfg.evolution_instance,
+            cfg.destino,
+            arquivo,
+            painel.legenda_completa,
+        )
+    finally:
+        arquivo.unlink(missing_ok=True)
+        
+        
+def main():
+    try:
+        cfg = carregar_config()
+    except ConfigError as e:
+        print(f"Erro de configuracao{e}")
+        return 2 
     
-]
+    falhas = []
+    
+    for i, painel in enumerate(cfg.paineis):
+        if i > 0:
+            time.sleep(cfg.pausa)
+        try:
+            processar_painel(cfg, painel)
+            print(f"OK     {painel.legenda_completa}")
+        except (GrafanaError, WhatsAppError) as e:
+            falhas.append(painel.legenda_completa)
+            print(f"FALHOU {painel.legenda_completa}: {e}")
 
-for i, p in enumerate(PAINEIS, start= 1):
-    destino = Path("output") / f"{i:02d}_{p['nome']}.png"
-    try: 
-        capturar_painel(BASE_URL, TOKEN, p["uid"], p["slug"], p["panel_id"], destino)
-        print (f"OK {destino} ({destino.stat().st_size / 1024:.0f}KB)")
-    except GrafanaError as e :
-        print(f"Falhou {p["nome"]}: {e}")
+    enviados = len(cfg.paineis) - len(falhas)
+    print(f"\nConcluído: {enviados} enviado(s), {len(falhas)} falha(s)")
+    return 1 if falhas else 0
+
+if __name__ == "__main__":
+    sys.exit(main())
+    

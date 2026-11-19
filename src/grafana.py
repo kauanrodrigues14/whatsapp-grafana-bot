@@ -35,7 +35,7 @@ def capturar_painel(
     headers = {"Authorization": f"Bearer {token}"}
     
     try: 
-        resp = requests.get(url, headers=headers, params=params, timeout=timeout +15)
+        resp = requests.get(url, headers=headers, params=params, timeout=timeout +15, allow_redirects= False)
     except requests.exceptions.Timeout as e:
         raise GrafanaError(f"Tempo esgotado ao renderizar painel {uid}/{painel_id}") from e
     except requests.exceptions.ConnectionError as e:
@@ -46,7 +46,11 @@ def capturar_painel(
          raise GrafanaError (f" Nao e uma imagem PNG{resp.text[:200]}")
     if len (resp.content) < 1000:
         raise GrafanaError(f"A imagem com menso de 1kb")
-    
+    if resp.status_code in (301, 302, 303, 307, 308):
+        raise GrafanaError(
+        f"O Grafana redirecionou para {resp.headers.get('Location', '?')}. "
+        "Provavelmente o token é inválido, expirou ou foi revogado."
+    )
     destino.parent.mkdir(parents=True, exist_ok= True)
     destino.write_bytes(resp.content)
     return destino

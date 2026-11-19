@@ -1,0 +1,31 @@
+periodo:
+  de: "now-6h"
+  ate: "now"
+
+pausa_entre_envios: 3
+
+paineis: 
+- ordem: 1
+  legenda: "Grafana - FID Geral"
+  uid: "ka4dd8q"
+  slug: "fid-geral"
+  panel_id: 1
+
+- ordem: 2
+  legenda: "Grafana - APIS"
+  uid: "kaztwkz"
+  slug: "apis"
+  panel_id: 1
+
+- ordem: 3
+  legenda: "Grafana - Relatórios"
+  uid: "kafmqtl"
+  slug: "relatorio"
+  panel_id: 1
+
+
+- ordem: 4
+  legenda: "Grafana - Dash 4"
+  uid: "kac9gfs"
+  slug: "dash-4"
+  panel_id: 1
